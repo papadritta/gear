@@ -393,6 +393,7 @@ pub mod pallet {
                                 }
 
                                 for message in execution_report.log {
+                                    gas_tree.split_off(message.id, message.gas_limit);
                                     Self::insert_to_mailbox(message.dest, message.clone());
                                     Self::deposit_event(Event::Log(message));
                                 }
@@ -539,15 +540,14 @@ pub mod pallet {
                         }
 
                         for message in execution_report.log {
+                            gas_tree.split_off(message.id, message.gas_limit);
                             Self::insert_to_mailbox(message.dest, message.clone());
-
                             Self::deposit_event(Event::Log(message));
                         }
 
                         // Enqueuing outgoing messages
                         for message in execution_report.messages {
                             gas_tree.split_off(message.id, message.gas_limit);
-
                             common::queue_message(message);
                         }
 
