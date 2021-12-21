@@ -1,0 +1,96 @@
+title: Async-sign (well known cases)
+
+programs:
+  - id: 1
+    path: target/wasm32-unknown-unknown/release/demo_continuation.wasm
+    init_message:
+      kind: custom
+      value:
+        # bob's Account Id
+        signatory: "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48"
+        signed_messages:
+          - message: "0x0000"
+            signature: "Incorrect signature"
+          - message: "0x0000"
+            signature: "0x0101f44d40d2998053383a34af76bc66d00a16c280eb4ef8e8a9b82abdb311eaed0454553618b5b406c286047e4134bff676560b853088550156564a2365f33f7e8f"
+          - message: "0x48656c6c6f2c20776f726c6421"
+            signature: "0x5222bafb52ad4711e4f3d8d12af685c8cacf49776ec0356aa69561b86e75ac780d3db5c41316fdb8d9348fd7a7c05db7ac5590cdadf55c61a80d7480b9397e8d"
+          - message: "0x4869212049276d20426f6221"
+            signature: "0xd8854a7f563a926dee326df9f1ccf32763c9b919d8e83798599b96dd377fce644f26a62f3039e6840b7423879c72448cc763316cc35d7010424892582e796880"
+        #gas_hint: None
+
+fixtures:
+  - title: signed message
+
+    messages:
+      - destination: 1
+        payload:
+          kind: bytes
+          value: ""
+
+    expected:
+      - step: 1
+        messages:
+          - destination: 1
+            payload:
+              kind: bytes
+              value: ""
+
+      - step: 2
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 3
+        messages:
+          - destination: 1
+            payload:
+          - destination: 1
+            payload:
+
+      - step: 4
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 5
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 6
+        messages:
+          - destination: 1
+            payload:
+          - destination: 1
+            payload:
+
+      - step: 7
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 8
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 9
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 10
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 11
+        messages:
+          - destination: 1
+            payload:
+
+      - step: 12
+        messages:
+          - destination: 1
+            payload:

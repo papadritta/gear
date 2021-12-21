@@ -256,6 +256,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "demo-continuation"
+version = "0.1.0"
+dependencies = [
+ "gstd",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+]
+
+[[package]]
 name = "demo-decoder"
 version = "0.1.0"
 dependencies = [

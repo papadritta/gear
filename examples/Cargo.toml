@@ -11,6 +11,7 @@ members = [
     "chat/bot",
     "chat/room",
     "collector",
+    "continuation",
     "capacitor",
     "decoder",
     "exit-code",
