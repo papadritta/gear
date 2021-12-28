@@ -23,3 +23,14 @@ pub unsafe extern "C" fn handle() {
 
 #[no_mangle]
 pub unsafe extern "C" fn init() {}
+
+#[gstd::test]
+fn receives_ping() {
+    let p1 = gstd::test::init_self(());
+    let reply = p1.send_and_wait_for_reply("PING").expect("Failed to wait for reply");
+    gstd::test::assert_eq!(reply, "PONG");
+
+    let p2 = gstd::test::mock_from_network("0xD4BFD16DA3D6AA3256ADEEC76315C");
+    let reply = p1.send_and_wait_for_reply("PING").expect("Failed to wait for reply");
+    gstd::test::assert_eq!(reply, "PONG");
+}
