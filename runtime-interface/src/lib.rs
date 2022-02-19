@@ -228,7 +228,8 @@ pub trait GearRI {
     }
 
     fn init_lazy_pages() -> bool {
-        unsafe { gear_lazy_pages::init_lazy_pages() }
+        false
+        // unsafe { gear_lazy_pages::init_lazy_pages() }
     }
 
     fn is_lazy_pages_enabled() -> bool {

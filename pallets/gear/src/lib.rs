@@ -61,6 +61,7 @@ use pallet_gas::Pallet as GasPallet;
 use pallet_gear_messenger::Pallet as MessengerPallet;
 use primitive_types::H256;
 use scale_info::TypeInfo;
+use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
 
@@ -1374,12 +1375,23 @@ pub mod pallet {
             dest: &T::AccountId,
             amount: Self::Balance,
         ) -> Result<(), DispatchError> {
-            let _ = <T as Config>::Currency::repatriate_reserved(
+            let leftover = <T as Config>::Currency::repatriate_reserved(
                 &<T::AccountId as Origin>::from_origin(source),
                 dest,
                 amount,
                 BalanceStatus::Free,
             )?;
+
+            if leftover > 0_u128.unique_saturated_into() {
+                log::debug!(
+                    target: "essential",
+                    "Reserved funds not fully repatriated from 0x{}… to 0x{}… : amount = {:?}, leftover = {:?}",
+                    HexDisplay::from(&source.as_ref()[..6].to_vec()),
+                    HexDisplay::from(&dest.clone().into_origin().as_ref()[..6].to_vec()),
+                    amount,
+                    leftover,
+                );
+            }
 
             Ok(())
         }

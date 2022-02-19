@@ -266,7 +266,7 @@ pub mod pallet {
                         common::remove_waiting_message(program_id, message_id).and_then(|(dispatch, bn)| {
                             let duration = current_block.saturated_into::<u32>().saturating_sub(bn);
                             let chargeable_amount =
-                            <T as pallet_gear::Config>::WaitListFeePerBlock::get().saturating_mul(duration.into());
+                                <T as pallet_gear::Config>::WaitListFeePerBlock::get().saturating_mul(duration.into());
 
                             match <T as pallet_gear::Config>::GasHandler::get_limit(dispatch.id().into_origin()) {
                                 Ok(maybe_limit) => {
@@ -384,10 +384,16 @@ pub mod pallet {
 
                             if pallet_gear_program::Pallet::<T>::program_exists(dispatch.destination().into_origin()) {
                                 // Enqueue the trap reply message
-                                let _ = <T as pallet_gear::Config>::GasHandler::split(
+                                if let Err(e) = <T as pallet_gear::Config>::GasHandler::split(
                                     msg_id.into_origin(),
                                     trap_message_id.into_origin(),
-                                );
+                                ) {
+                                    log::debug!(
+                                        target: "essential",
+                                        "Failed to create value node for trap reply message: {:?}",
+                                        e,
+                                    );
+                                }
 
                                 <MessengerPallet<T> as Messenger>::Queue::push_back(dispatch)
                                     .unwrap_or_else(|e| unreachable!("Message queue corrupted! {:?}", e));

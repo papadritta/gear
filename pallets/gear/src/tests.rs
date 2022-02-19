@@ -2661,7 +2661,7 @@ mod utils {
     pub(super) type GasPrice = <Test as pallet::Config>::GasPrice;
     type BlockNumber = <Test as frame_system::Config>::BlockNumber;
 
-    pub(super) fn init_logger() {
+    pub(crate) fn init_logger() {
         let _ = env_logger::Builder::from_default_env()
             .format_module_path(false)
             .format_level(true)
