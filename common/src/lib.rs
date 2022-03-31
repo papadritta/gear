@@ -19,6 +19,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod lazy_pages;
+pub mod map_queue;
 pub mod storage_queue;
 
 #[cfg(feature = "runtime-benchmarks")]
