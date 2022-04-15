@@ -23,7 +23,9 @@ use crate::message::{
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-/// Init message.
+/// InitMessage
+/// 
+/// This message subclass specialized to be used in context::MessageContext::init_program method
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct InitMessage {
     /// Message id.
