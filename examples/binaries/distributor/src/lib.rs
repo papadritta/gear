@@ -93,6 +93,7 @@ mod wasm {
             async move {
                 let reply_bytes =
                     msg::send_bytes_and_wait_for_reply(program_handle, &encoded_request[..], 0)
+                        .expect("Error in message sending")
                         .await
                         .expect("Error in async message processing");
 
@@ -136,7 +137,7 @@ mod wasm {
             };
 
             debug!("Handle request finished");
-            msg::reply(reply, 0);
+            msg::reply(reply, 0).unwrap();
         }
 
         async fn handle_receive(amount: u64) -> Reply {
@@ -216,7 +217,7 @@ mod wasm {
     #[no_mangle]
     pub unsafe extern "C" fn init() {
         STATE = Some(ProgramState::default());
-        msg::reply((), 0);
+        msg::reply((), 0).unwrap();
         debug!("Program initialized");
     }
 }
@@ -266,23 +267,23 @@ mod tests {
         assert!(res.contains(&log));
     }
 
-    fn multi_program_setup<'a>(
-        system: &'a System,
+    fn multi_program_setup(
+        system: &System,
         program_1_id: u64,
         program_2_id: u64,
         program_3_id: u64,
-    ) -> (Program<'a>, Program<'a>, Program<'a>) {
+    ) -> (Program, Program, Program) {
         system.init_logger();
 
         let from = 42;
 
-        let program_1 = Program::current_with_id(&system, program_1_id);
+        let program_1 = Program::current_with_id(system, program_1_id);
         let _res = program_1.send_bytes(from, b"init");
 
-        let program_2 = Program::current_with_id(&system, program_2_id);
+        let program_2 = Program::current_with_id(system, program_2_id);
         let _res = program_2.send_bytes(from, b"init");
 
-        let program_3 = Program::current_with_id(&system, program_3_id);
+        let program_3 = Program::current_with_id(system, program_3_id);
         let _res = program_3.send_bytes(from, b"init");
 
         let res = program_1.send(from, Request::Join(program_2_id));
