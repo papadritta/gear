@@ -16,13 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use common::{lazy_pages, ExitCode};
+use common::lazy_pages;
 use core_processor::{
     configs::{AllocationsConfig, BlockInfo},
     Ext, ProcessorExt,
 };
 use gear_backend_common::{ExtInfo, IntoExtInfo};
 use gear_core::{
+    costs::HostFnWeights,
     env::Ext as EnvExt,
     gas::{GasAllowanceCounter, GasAmount, GasCounter, ValueCounter},
     ids::{CodeId, MessageId, ProgramId},
@@ -101,6 +102,7 @@ impl ProcessorExt for LazyPagesExt {
         origin: ProgramId,
         program_id: ProgramId,
         program_candidates_data: BTreeMap<CodeId, Vec<(ProgramId, MessageId)>>,
+        host_fn_weights: HostFnWeights,
     ) -> Self {
         Self {
             inner: Ext {
@@ -117,6 +119,7 @@ impl ProcessorExt for LazyPagesExt {
                 origin,
                 program_id,
                 program_candidates_data,
+                host_fn_weights,
             },
             lazy_pages_enabled: false,
         }
@@ -165,9 +168,17 @@ impl EnvExt for LazyPagesExt {
         mem: &mut dyn Memory,
     ) -> Result<WasmPageNumber, &'static str> {
         // Greedily charge gas for allocations
-        self.charge_gas(pages_num.0 * self.inner.config.alloc_cost as u32)?;
+        self.charge_gas(
+            pages_num
+                .0
+                .saturating_mul(self.inner.config.alloc_cost as u32),
+        )?;
         // Greedily charge gas for grow
-        self.charge_gas(pages_num.0 * self.inner.config.mem_grow_cost as u32)?;
+        self.charge_gas(
+            pages_num
+                .0
+                .saturating_mul(self.inner.config.mem_grow_cost as u32),
+        )?;
 
         let old_mem_size = mem.size();
 
@@ -199,8 +210,11 @@ impl EnvExt for LazyPagesExt {
         // Returns back greedily used gas for grow
         let new_mem_size = mem.size();
         let grow_pages_num = new_mem_size - old_mem_size;
-        let mut gas_to_return_back =
-            self.inner.config.mem_grow_cost * (pages_num - grow_pages_num).0 as u64;
+        let mut gas_to_return_back = self
+            .inner
+            .config
+            .mem_grow_cost
+            .saturating_mul((pages_num - grow_pages_num).0 as u64);
 
         // Returns back greedily used gas for allocations
         let first_page = page_number;
@@ -211,23 +225,27 @@ impl EnvExt for LazyPagesExt {
                 new_alloced_pages_num = new_alloced_pages_num + 1.into();
             }
         }
-        gas_to_return_back +=
-            self.inner.config.alloc_cost * (pages_num - new_alloced_pages_num).0 as u64;
+        gas_to_return_back = gas_to_return_back.saturating_add(
+            self.inner
+                .config
+                .alloc_cost
+                .saturating_mul((pages_num - new_alloced_pages_num).0 as u64),
+        );
 
         self.refund_gas(gas_to_return_back as u32)?;
 
         Ok(page_number)
     }
 
-    fn block_height(&self) -> u32 {
+    fn block_height(&mut self) -> Result<u32, &'static str> {
         self.inner.block_height()
     }
 
-    fn block_timestamp(&self) -> u64 {
+    fn block_timestamp(&mut self) -> Result<u64, &'static str> {
         self.inner.block_timestamp()
     }
 
-    fn origin(&self) -> ProgramId {
+    fn origin(&mut self) -> Result<ProgramId, &'static str> {
         self.inner.origin()
     }
 
@@ -251,11 +269,11 @@ impl EnvExt for LazyPagesExt {
         self.inner.reply_commit(msg)
     }
 
-    fn reply_to(&self) -> Option<(MessageId, ExitCode)> {
+    fn reply_to(&mut self) -> Result<Option<(MessageId, i32)>, &'static str> {
         self.inner.reply_to()
     }
 
-    fn source(&mut self) -> ProgramId {
+    fn source(&mut self) -> Result<ProgramId, &'static str> {
         self.inner.source()
     }
 
@@ -263,11 +281,11 @@ impl EnvExt for LazyPagesExt {
         self.inner.exit(value_destination)
     }
 
-    fn message_id(&mut self) -> MessageId {
+    fn message_id(&mut self) -> Result<MessageId, &'static str> {
         self.inner.message_id()
     }
 
-    fn program_id(&self) -> ProgramId {
+    fn program_id(&mut self) -> Result<ProgramId, &'static str> {
         self.inner.program_id()
     }
 
@@ -291,11 +309,15 @@ impl EnvExt for LazyPagesExt {
         self.inner.refund_gas(val)
     }
 
-    fn gas_available(&self) -> u64 {
+    fn gas(&mut self, val: u32) -> Result<(), &'static str> {
+        self.inner.gas(val)
+    }
+
+    fn gas_available(&mut self) -> Result<u64, &'static str> {
         self.inner.gas_available()
     }
 
-    fn value(&self) -> u128 {
+    fn value(&mut self) -> Result<u128, &'static str> {
         self.inner.value()
     }
 
@@ -311,7 +333,7 @@ impl EnvExt for LazyPagesExt {
         self.inner.wake(waker_id)
     }
 
-    fn value_available(&self) -> u128 {
+    fn value_available(&mut self) -> Result<u128, &'static str> {
         self.inner.value_available()
     }
 
@@ -320,5 +342,12 @@ impl EnvExt for LazyPagesExt {
         packet: gear_core::message::InitPacket,
     ) -> Result<ProgramId, &'static str> {
         self.inner.create_program(packet)
+    }
+
+    fn charge_gas_runtime(
+        &mut self,
+        costs: gear_core::costs::RuntimeCosts,
+    ) -> Result<(), &'static str> {
+        self.inner.charge_gas_runtime(costs)
     }
 }
