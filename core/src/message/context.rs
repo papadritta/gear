@@ -112,29 +112,6 @@ pub struct ContextStore {
     reply_sent: bool,
 }
 
-/// Error using messages.
-#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
-pub enum Error {
-    /// Message limit exceeded.
-    LimitExceeded,
-    /// Duplicate reply message.
-    DuplicateReply,
-    /// Duplicate waiting message.
-    DuplicateWaiting,
-    /// Duplicate waking message.
-    DuplicateWaking,
-    /// An attempt to commit or to push a payload into an already formed message.
-    LateAccess,
-    /// No message found with given handle, or handle exceeds the maximum messages amount.
-    OutOfBounds,
-    /// An attempt to push a payload into reply that was not set.
-    NoReplyFound,
-    /// An attempt to interrupt execution with `wait(..)` while some messages weren't completed.
-    UncommittedPayloads,
-    /// Duplicate init message.
-    DuplicateInit,
-}
-
 /// Context of currently processing incoming message.
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct MessageContext {
@@ -504,7 +481,9 @@ mod tests {
         // Checking that we also get an error when trying
         // to commit or send a non-existent message
         assert!(context.send_push(expected_handle, &[0]).is_err());
-        assert!(context.send_commit(expected_handle, HandlePacket::default()).is_err());
+        assert!(context
+            .send_commit(expected_handle, HandlePacket::default())
+            .is_err());
 
         // Creating a handle to init and do not commit later
         // to show that the message will not be sent
