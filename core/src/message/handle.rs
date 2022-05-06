@@ -26,7 +26,7 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
 /// Message for Handle entry point.
-/// Has the same fields as InitMessage, but should only be sent to already initialized programs.
+/// Has the same fields as [`InitMessage`], but should only be sent to already initialized programs.
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct HandleMessage {
     /// Message id.

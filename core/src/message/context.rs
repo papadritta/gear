@@ -36,7 +36,7 @@ pub const OUTGOING_LIMIT: u32 = 1024;
 pub struct ContextSettings {
     /// Amount of gas needed for send a message.
     sending_fee: u64,
-    /// Limit of outgoung messages that we can send before LimitExceeded.
+    /// Amount of messages that can be produced from single message.
     outgoing_limit: u32,
 }
 
@@ -383,14 +383,14 @@ mod tests {
         assert!(matches!(result, Err(Error::DuplicateReply)));
     }
 
-    // Set of constants for clarity of a part of the test
+    // Set of constants for clarity of a part of the test.
     const INCOMING_MESSAGE_ID: u64 = 3;
     const INCOMING_MESSAGE_SOURCE: u64 = 4;
 
     #[test]
-    /// Test that covers full api of `MessageContext`
+    // Test that covers full api of `MessageContext`.
     fn message_context_api() {
-        // Creating an incoming message around which the runner builds the `MessageContext`
+        // Creating an incoming message around which the runner builds the `MessageContext`.
         let incoming_message = IncomingMessage::new(
             MessageId::from(INCOMING_MESSAGE_ID),
             ProgramId::from(INCOMING_MESSAGE_SOURCE),
@@ -407,7 +407,7 @@ mod tests {
             None,
         );
 
-        // Checking that the initial parameters of the context match the passed constants
+        // Checking that the initial parameters of the context match the passed constants.
         assert_eq!(context.current().id(), MessageId::from(INCOMING_MESSAGE_ID));
         assert!(context.store.reply.is_none());
         assert!(context.outcome.reply.is_none());
@@ -415,10 +415,10 @@ mod tests {
         // Creating a reply packet
         let reply_packet = ReplyPacket::new(vec![0, 0], 0);
 
-        // Checking that we are able to initialize reply
+        // Checking that we are able to initialize reply.
         assert!(context.reply_push(&[1, 2, 3]).is_ok());
 
-        // Setting reply message and making sure the operation was successful
+        // Setting reply message and making sure the operation was successful.
         assert!(context.reply_commit(reply_packet.clone()).is_ok());
 
         // Checking that the `ReplyMessage` matches the passed one
@@ -427,23 +427,23 @@ mod tests {
             vec![1, 2, 3, 0, 0],
         );
 
-        // Checking that repeated call `reply_push(...)` returns error and does not do anything
+        // Checking that repeated call `reply_push(...)` returns error and does not do anything.
         assert!(context.reply_push(&[1]).is_err());
         assert_eq!(
             context.outcome.reply.as_ref().unwrap().payload().to_vec(),
             vec![1, 2, 3, 0, 0],
         );
 
-        // Checking that repeated call `reply_commit(...)` returns error and does not
+        // Checking that repeated call `reply_commit(...)` returns error and does not.
         assert!(context.reply_commit(reply_packet).is_err());
 
-        // Checking that at this point vector of outgoing messages is empty
+        // Checking that at this point vector of outgoing messages is empty.
         assert!(context.outcome.handle.is_empty());
 
-        // Creating an expected handle for a future initialized message
+        // Creating an expected handle for a future initialized message.
         let expected_handle = 0;
 
-        // Initializing message and compare its handle with expected one
+        // Initializing message and compare its handle with expected one.
         assert_eq!(
             context.send_init().expect("Error initializing new message"),
             expected_handle
@@ -458,35 +458,35 @@ mod tests {
             .is_some());
 
         // Checking that we are able to push payload for the
-        // message that we have not committed yet
+        // message that we have not committed yet.
         assert!(context.send_push(expected_handle, &[5, 7]).is_ok());
         assert!(context.send_push(expected_handle, &[9]).is_ok());
 
-        // Creating an outgoing packet to commit sending by parts
+        // Creating an outgoing packet to commit sending by parts.
         let commit_packet = HandlePacket::default();
 
         // Checking if commit is successful
         assert!(context.send_commit(expected_handle, commit_packet).is_ok());
 
         // Checking that we are **NOT** able to push payload for the message or
-        // commit it if we already committed it or directly pushed before
+        // commit it if we already committed it or directly pushed before.
         assert!(context.send_push(expected_handle, &[5, 7]).is_err());
         assert!(context
             .send_commit(expected_handle, HandlePacket::default())
             .is_err());
 
-        // Creating a handle to push and do commit non-existent message
+        // Creating a handle to push and do commit non-existent message.
         let expected_handle = 15;
 
         // Checking that we also get an error when trying
-        // to commit or send a non-existent message
+        // to commit or send a non-existent message.
         assert!(context.send_push(expected_handle, &[0]).is_err());
         assert!(context
             .send_commit(expected_handle, HandlePacket::default())
             .is_err());
 
         // Creating a handle to init and do not commit later
-        // to show that the message will not be sent
+        // to show that the message will not be sent.
         let expected_handle = 1;
 
         assert_eq!(
@@ -495,14 +495,14 @@ mod tests {
         );
         assert!(context.send_push(expected_handle, &[2, 2]).is_ok());
 
-        // Checking that reply message not lost and matches our initial
+        // Checking that reply message not lost and matches our initial.
         assert!(context.outcome.reply.is_some());
         assert_eq!(
             context.outcome.reply.as_ref().unwrap().payload(),
             vec![1, 2, 3, 0, 0]
         );
 
-        // Checking that on drain we get only messages that were fully formed (directly sent or committed)
+        // Checking that on drain we get only messages that were fully formed (directly sent or committed).
         let (expected_result, _) = context.drain();
         assert_eq!(expected_result.handle.len(), 1);
         assert_eq!(expected_result.handle[0].payload(), vec![5, 7, 9]);

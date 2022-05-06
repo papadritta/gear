@@ -24,7 +24,7 @@ use codec::{Decode, Encode};
 use core::ops::Deref;
 use scale_info::TypeInfo;
 
-/// Structure for message between actors.
+/// Transaction that send from one actor to another.
 /// Can be created from any type of messages and used to dispatch them.
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct Message {
