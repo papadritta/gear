@@ -382,6 +382,61 @@ fn unused_gas_released_back_works() {
 
 #[cfg(unix)]
 #[test]
+fn inf_loop() {
+    let wat = r#"
+	(module
+		(import "env" "memory" (memory 1))
+        (import "env" "alloc" (func $alloc (param i32) (result i32)))
+		(export "handle" (func $handle))
+		(export "init" (func $init))
+		(func $init)
+        (func $handle
+            loop
+                ;; i32.const 0x0
+                ;; i32.const 0x42
+                ;; i32.store
+                br 0 (;@1;)
+            end
+		)
+	)"#;
+
+    init_logger();
+    new_test_ext().execute_with(|| {
+        let pid = {
+            let code = ProgramCodeKind::Custom(wat).to_bytes();
+            let salt = DEFAULT_SALT.to_vec();
+            let prog_id = generate_program_id(&code, &salt);
+            let res = GearPallet::<Test>::submit_program(
+                Origin::signed(USER_1),
+                code,
+                salt,
+                EMPTY_PAYLOAD.to_vec(),
+                5_000_000,
+                0,
+            )
+            .map(|_| prog_id);
+            assert_ok!(res);
+            res.expect("submit result was asserted")
+        };
+
+        run_to_block(2, Some(10_000_000));
+        log::debug!("submit done {:?}", pid);
+        SystemPallet::<Test>::assert_last_event(Event::MessagesDequeued(1).into());
+
+        let res = GearPallet::<Test>::send_message(
+            Origin::signed(USER_1),
+            pid,
+            EMPTY_PAYLOAD.to_vec(),
+            1_000_000,
+            100,
+        );
+        log::debug!("res = {:?}", res);
+        assert_ok!(res);
+    });
+}
+
+#[cfg(unix)]
+#[test]
 fn lazy_pages() {
     use gear_core::memory::{PageNumber, WasmPageNumber};
     use gear_runtime_interface as gear_ri;

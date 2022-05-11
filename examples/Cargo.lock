@@ -361,6 +361,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "demo-inf-loop"
+version = "0.1.0"
+dependencies = [
+ "gstd",
+]
+
+[[package]]
 name = "demo-mem"
 version = "0.1.0"
 dependencies = [

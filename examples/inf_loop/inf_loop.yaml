@@ -1,0 +1,21 @@
+title: inf loop
+
+programs:
+  - id: 1
+    path: target/wasm32-unknown-unknown/release/demo_inf_loop.wasm
+
+fixtures:
+  - title: inf loop
+    messages:
+      - destination: 1
+        payload:
+          kind: i32
+          value: 0
+
+    expected:
+      - log:
+        - destination: 1000001
+          payload:
+            kind: utf-8
+            value: PONG
+

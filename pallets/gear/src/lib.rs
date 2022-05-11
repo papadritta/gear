@@ -1052,7 +1052,8 @@ pub mod pallet {
                 code.len() as u32 <= schedule.limits.code_len,
                 Error::<T>::CodeTooLarge
             );
-
+            // use wasm_instrument::gas_metering::ConstantCostRules;
+            // let code = Code::try_new(code.clone(), 1, |_| ConstantCostRules::default())
             let code = Code::try_new(code, schedule.instruction_weights.version, |module| {
                 schedule.rules(module)
             })
