@@ -25,7 +25,7 @@ use core::ops::Deref;
 use scale_info::TypeInfo;
 
 /// Transaction that send from one actor to another.
-/// Can be created from any type of messages and used to dispatch them.
+/// Can transfer value and exectues destination if it is a program.
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct Message {
     /// Message id.
