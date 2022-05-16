@@ -13,7 +13,7 @@ hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 rand = { version = "0.8.5", default-features = false, features = ["small_rng"] }
 
 [build-dependencies]
-substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/gear-tech/substrate.git", branch = "gear-stable" }
+gear-wasm-builder = { path = "../../../utils/wasm-builder" }
 
 [lib]
 

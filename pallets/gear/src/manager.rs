@@ -503,7 +503,7 @@ where
                             unreachable!("Can never happen unless gas tree corrupted");
                         }
                     }
-                },
+                }
                 Err(err) => {
                     log::debug!(
                         target: "essential",

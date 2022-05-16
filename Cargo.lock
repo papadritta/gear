@@ -1339,21 +1339,17 @@ dependencies = [
  "gstd",
  "hex",
  "parity-scale-codec",
- "gstd",
- "hex",
- "parity-scale-codec",
- "substrate-wasm-builder",
 ]
 
 [[package]]
 name = "demo-contract-template"
 version = "0.1.0"
 dependencies = [
+ "gear-wasm-builder",
  "gstd",
  "hex",
  "parity-scale-codec",
  "rand 0.8.5",
- "substrate-wasm-builder",
 ]
 
 [[package]]
@@ -1398,20 +1394,16 @@ dependencies = [
  "gstd",
  "hex",
  "parity-scale-codec",
- "gstd",
- "hex",
- "parity-scale-codec",
- "substrate-wasm-builder",
 ]
 
 [[package]]
 name = "demo-ncompose"
 version = "0.1.0"
 dependencies = [
+ "gear-wasm-builder",
  "gstd",
  "hex",
  "parity-scale-codec",
- "substrate-wasm-builder",
 ]
 
 [[package]]
@@ -1449,9 +1441,9 @@ dependencies = [
 name = "demo-unchecked-mul"
 version = "0.1.0"
 dependencies = [
+ "gear-wasm-builder",
  "gstd",
  "parity-scale-codec",
- "substrate-wasm-builder",
 ]
 
 [[package]]
@@ -4945,10 +4937,8 @@ dependencies = [
  "demo-exit-init",
  "demo-init-wait",
  "demo-mul-by-const",
- "demo-ncompose",
  "demo-program-factory",
  "demo-proxy",
- "demo-unchecked-mul",
  "env_logger",
  "frame-benchmarking",
  "frame-support",

@@ -63,9 +63,6 @@ demo-proxy = { path = "../../examples/binaries/proxy" }
 demo-mul-by-const = { path = "../../examples/binaries/mul-by-const" }
 demo-compose = { path = "../../examples/binaries/compose" }
 page_size = "0.4.2"
-demo-ncompose = { path = "../../examples/binaries/ncompose" }
-demo-mul-by-const = { path = "../../examples/binaries/mul-by-const" }
-demo-unchecked-mul = { path = "../../examples/binaries/unchecked-mul" }
 
 [features]
 default = ['std']

@@ -19,9 +19,9 @@
 use arbitrary::Unstructured;
 use codec::Encode;
 use common::ValueTree;
-use demo_contract_template::WASM_BINARY_BLOATY as GENERAL_WASM_BINARY;
-use demo_mul_by_const::WASM_BINARY_BLOATY as MUL_CONST_WASM_BINARY;
-use demo_ncompose::WASM_BINARY_BLOATY as NCOMPOSE_WASM_BINARY;
+use demo_contract_template::WASM_BINARY as GENERAL_WASM_BINARY;
+use demo_mul_by_const::WASM_BINARY as MUL_CONST_WASM_BINARY;
+use demo_ncompose::WASM_BINARY as NCOMPOSE_WASM_BINARY;
 use frame_support::dispatch::DispatchError;
 use gear_runtime::{Gear, Origin, Runtime};
 use primitive_types::H256;
@@ -112,18 +112,12 @@ pub fn composer_target(params: &Params) -> TargetOutcome {
         }
 
         if let Params::Composer(params) = params {
-            let composer_id =
-                generate_program_id(NCOMPOSE_WASM_BINARY.expect("Wasm binary missing!"), b"salt");
-            let mul_id = generate_program_id(
-                MUL_CONST_WASM_BINARY.expect("Wasm binary missing!"),
-                b"salt",
-            );
+            let composer_id = generate_program_id(NCOMPOSE_WASM_BINARY, b"salt");
+            let mul_id = generate_program_id(MUL_CONST_WASM_BINARY, b"salt");
 
             Gear::submit_program(
                 Origin::signed(alice.clone()),
-                MUL_CONST_WASM_BINARY
-                    .expect("Wasm binary missing!")
-                    .to_vec(),
+                MUL_CONST_WASM_BINARY.to_vec(),
                 b"salt".to_vec(),
                 params.intrinsic_value.encode(),
                 30_000_000,
@@ -133,7 +127,7 @@ pub fn composer_target(params: &Params) -> TargetOutcome {
 
             Gear::submit_program(
                 Origin::signed(alice.clone()),
-                NCOMPOSE_WASM_BINARY.expect("Wasm binary missing!").to_vec(),
+                NCOMPOSE_WASM_BINARY.to_vec(),
                 b"salt".to_vec(),
                 (<[u8; 32]>::from(mul_id), params.depth).encode(),
                 50_000_000,
@@ -239,7 +233,7 @@ pub fn simple_scenario(params: &Params) -> TargetOutcome {
             // Generating IDs for contracts-to-be
 
             // Registering the original contract
-            let original_code = GENERAL_WASM_BINARY.expect("Wasm binary not found");
+            let original_code = GENERAL_WASM_BINARY;
             let salt = &0_usize.to_le_bytes()[..];
             let original_contract_id = generate_program_id(original_code, salt);
             contracts.insert(
@@ -437,7 +431,7 @@ pub fn simple_scenario(params: &Params) -> TargetOutcome {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use demo_compose::WASM_BINARY_BLOATY as COMPOSE_WASM_BINARY;
+    use demo_compose::WASM_BINARY as COMPOSE_WASM_BINARY;
     use frame_support::assert_ok;
 
     #[test]
@@ -457,30 +451,24 @@ mod tests {
             );
             assert_eq!(total_gas_in_wait_list(), 0);
 
-            let composer_id =
-                generate_program_id(NCOMPOSE_WASM_BINARY.expect("Wasm binary missing!"), b"salt");
-            let mul_id = generate_program_id(
-                MUL_CONST_WASM_BINARY.expect("Wasm binary missing!"),
-                b"salt",
-            );
+            let composer_id = generate_program_id(NCOMPOSE_WASM_BINARY, b"salt");
+            let mul_id = generate_program_id(MUL_CONST_WASM_BINARY, b"salt");
 
             assert_ok!(Gear::submit_program(
                 Origin::signed(alice.clone()),
-                MUL_CONST_WASM_BINARY
-                    .expect("Wasm binary missing!")
-                    .to_vec(),
+                MUL_CONST_WASM_BINARY.to_vec(),
                 b"salt".to_vec(),
                 100_u64.encode(),
-                30_000_000,
+                400_000_000,
                 0,
             ));
 
             assert_ok!(Gear::submit_program(
                 Origin::signed(alice.clone()),
-                NCOMPOSE_WASM_BINARY.expect("Wasm binary missing!").to_vec(),
+                NCOMPOSE_WASM_BINARY.to_vec(),
                 b"salt".to_vec(),
                 (<[u8; 32]>::from(mul_id), 8_u16).encode(), // 8 iterations
-                50_000_000,
+                400_000_000,
                 0,
             ));
 
@@ -526,49 +514,38 @@ mod tests {
             );
             assert_eq!(total_gas_in_wait_list(), 0);
 
-            let contract_a_id = generate_program_id(
-                MUL_CONST_WASM_BINARY.expect("Wasm binary missing!"),
-                b"contract_a",
-            );
-            let contract_b_id = generate_program_id(
-                MUL_CONST_WASM_BINARY.expect("Wasm binary missing!"),
-                b"contract_b",
-            );
-            let compose_id =
-                generate_program_id(COMPOSE_WASM_BINARY.expect("Wasm binary missing!"), b"salt");
+            let contract_a_id = generate_program_id(MUL_CONST_WASM_BINARY, b"contract_a");
+            let contract_b_id = generate_program_id(MUL_CONST_WASM_BINARY, b"contract_b");
+            let compose_id = generate_program_id(COMPOSE_WASM_BINARY, b"salt");
 
             assert_ok!(Gear::submit_program(
                 Origin::signed(alice.clone()),
-                MUL_CONST_WASM_BINARY
-                    .expect("Wasm binary missing!")
-                    .to_vec(),
+                MUL_CONST_WASM_BINARY.to_vec(),
                 b"contract_a".to_vec(),
                 50_u64.encode(),
-                30_000_000,
+                400_000_000,
                 0,
             ));
 
             assert_ok!(Gear::submit_program(
                 Origin::signed(alice.clone()),
-                MUL_CONST_WASM_BINARY
-                    .expect("Wasm binary missing!")
-                    .to_vec(),
+                MUL_CONST_WASM_BINARY.to_vec(),
                 b"contract_b".to_vec(),
                 75_u64.encode(),
-                30_000_000,
+                400_000_000,
                 0,
             ));
 
             assert_ok!(Gear::submit_program(
                 Origin::signed(alice.clone()),
-                COMPOSE_WASM_BINARY.expect("Wasm binary missing!").to_vec(),
+                COMPOSE_WASM_BINARY.to_vec(),
                 b"salt".to_vec(),
                 (
                     <[u8; 32]>::from(contract_a_id),
                     <[u8; 32]>::from(contract_b_id)
                 )
                     .encode(),
-                40_000_000,
+                400_000_000,
                 0,
             ));
 
@@ -641,7 +618,7 @@ mod tests {
         let mut contracts = BTreeMap::<H256, (Vec<u8>, Vec<u8>)>::new();
 
         // Registering the original contract
-        let original_code = GENERAL_WASM_BINARY.expect("Wasm binary not found");
+        let original_code = GENERAL_WASM_BINARY;
         let salt = &0_usize.to_le_bytes()[..];
         let original_contract_id = generate_program_id(original_code, salt);
         contracts.insert(
