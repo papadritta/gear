@@ -25,7 +25,8 @@ use crate::{
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-/// Handle message.
+/// Message for Handle entry point.
+/// User send this messages to programs or another users
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct HandleMessage {
     /// Message id.

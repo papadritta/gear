@@ -26,7 +26,9 @@ use crate::{
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-/// Reply message.
+/// Message for Reply entry point.
+/// Message type that program sends during execution.
+/// Contains id the message that we replied so we can reproduse whole chain of messages.
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct ReplyMessage {
     /// Message id.

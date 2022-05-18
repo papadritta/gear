@@ -23,7 +23,8 @@ use crate::message::{
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-/// Init message.
+/// Message for Init entry point.
+/// Used to initiate a new program in chain
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct InitMessage {
     /// Message id.
