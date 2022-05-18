@@ -24,7 +24,7 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
 /// Message for Init entry point.
-/// Used to initiate a new program in chain
+/// The first message that sends to the new program in the chain once. Used to initiate it.
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct InitMessage {
     /// Message id.

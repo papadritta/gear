@@ -24,8 +24,8 @@ use codec::{Decode, Encode};
 use core::ops::Deref;
 use scale_info::TypeInfo;
 
-/// Transaction that send from one actor to another.
-/// Can transfer value and exectues destination if it is a program.
+/// Transaction that sends from one actor to another.
+/// Can transfer value and executes destination if it is a program.
 #[derive(Clone, Default, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub struct Message {
     /// Message id.
