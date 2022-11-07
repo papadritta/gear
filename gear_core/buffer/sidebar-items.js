@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["LimitedVec","Limited len vector. `T` is data type. `E` is overflow error type. `N` is max len which a vector can have."],["RuntimeBufferSizeError","Runtime buffer size exceed error"]],"type":[["RuntimeBuffer","Buffer which size cannot be bigger then max allowed allocation size in runtime."]]};

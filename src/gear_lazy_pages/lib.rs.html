@@ -1,0 +1,812 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lazy-pages/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-b826345d929eb323.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-87108236bf50c158.css"><link rel="stylesheet" disabled href="../../static.files/dark-839c5fb8722cb456.css"><link rel="stylesheet" disabled href="../../static.files/ayu-d48ac194417684c8.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-74087aa2e88f4475.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0dede64717b247ca.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-201a7e04dc4c6fce.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../gear_lazy_pages/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Gear.
+
+// Copyright (C) 2021-2022 Gear Technologies Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
+
+</span><span class="doccomment">//! Lazy-pages support.
+//! In runtime data for contract wasm memory pages can be loaded in lazy manner.
+//! All pages, which is supposed to be lazy, must be mprotected before contract execution.
+//! During execution data from storage is loaded for all pages, which has been accessed.
+//! See also `sys::user_signal_handler` in the source code.
+//!
+//! Currently we restrict twice write signal from same page during one execution.
+//! It&#39;s not necessary behavior, but more simple and safe.
+
+</span><span class="kw">use </span>gear_core::memory::{PageNumber, WasmPageNumber, PAGE_STORAGE_GRANULARITY};
+<span class="kw">use </span>once_cell::sync::OnceCell;
+<span class="kw">use </span>sp_std::vec::Vec;
+<span class="kw">use </span>std::{cell::RefCell, collections::BTreeSet, convert::TryFrom};
+
+<span class="kw">mod </span>sys;
+<span class="kw">pub use </span><span class="kw">crate</span>::sys::{DefaultUserSignalHandler, ExceptionInfo, UserSignalHandler};
+
+<span class="doccomment">/// Initialize lazy-pages once for process.
+</span><span class="kw">static </span>LAZY_PAGES_INITIALIZED: OnceCell&lt;<span class="prelude-ty">Result</span>&lt;(), InitError&gt;&gt; = OnceCell::new();
+
+<span class="attr">#[derive(Debug, derive_more::Display, derive_more::From)]
+</span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[display(fmt = <span class="string">&quot;WASM memory begin address is not set&quot;</span>)]
+    </span>WasmMemAddrIsNotSet,
+    <span class="attr">#[display(fmt = <span class="string">&quot;WASM memory size is not set&quot;</span>)]
+    </span>WasmMemSizeIsNotSet,
+    <span class="attr">#[display(fmt = <span class="string">&quot;Overflow of address arithmetic operation&quot;</span>)]
+    </span>AddrArithOverflow,
+    <span class="attr">#[display(fmt = <span class="string">&quot;Program pages prefix in storage is not set&quot;</span>)]
+    </span>ProgramPrefixIsNotSet,
+    <span class="attr">#[display(
+        fmt = <span class="string">&quot;Signal is from unknown memory: {:#x} not in [{:#x}, {:#x})&quot;</span>,
+        addr,
+        wasm_mem_addr,
+        wasm_mem_end_addr
+    )]
+    </span>SignalFromUnknownMemory {
+        addr: usize,
+        wasm_mem_addr: usize,
+        wasm_mem_end_addr: usize,
+    },
+    <span class="attr">#[display(
+        fmt = <span class="string">&quot;Signal addr {:#x} is from WASM program virtual stack memory [0, {:#x})&quot;</span>,
+        wasm_addr,
+        stack_end
+    )]
+    </span>SignalFromStackMemory {
+        wasm_addr: WasmAddr,
+        stack_end: WasmAddr,
+    },
+    <span class="attr">#[display(
+        fmt = <span class="string">&quot;Accessed pages do not lay in WASM memory: [{:#x}, {:#x}) not in [{:#x}, {:#x})&quot;</span>,
+        begin_addr,
+        end_addr,
+        wasm_mem_addr,
+        wasm_mem_end_addr
+    )]
+    </span>AccessedIntervalNotLiesInWasmBuffer {
+        begin_addr: usize,
+        end_addr: usize,
+        wasm_mem_addr: usize,
+        wasm_mem_end_addr: usize,
+    },
+    <span class="attr">#[display(
+        fmt = <span class="string">&quot;Page data in storage must contain {} bytes, actually has {}&quot;</span>,
+        expected,
+        actual
+    )]
+    </span>InvalidPageDataSize { expected: usize, actual: u32 },
+    <span class="doccomment">/// Found a write signal from same page twice - see more in head comment.
+    </span><span class="attr">#[display(fmt = <span class="string">&quot;Any page cannot be released twice: {_0:?}&quot;</span>)]
+    </span>DoubleRelease(PageNumber),
+    <span class="attr">#[display(fmt = <span class="string">&quot;Protection error: {_0}&quot;</span>)]
+    #[from]
+    </span>MemoryProtection(region::Error),
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>WasmAddr = u32;
+
+<span class="attr">#[derive(Clone, Copy)]
+</span><span class="kw">pub enum </span>LazyPagesVersion {
+    Version1,
+}
+
+<span class="attr">#[derive(Default, PartialEq, Eq, Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>LazyPagesExecutionContext {
+    <span class="doccomment">/// Pointer to the begin of wasm memory buffer
+    </span><span class="kw">pub </span>wasm_mem_addr: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+    <span class="doccomment">/// Wasm memory buffer size, to identify whether signal is from wasm memory buffer.
+    </span><span class="kw">pub </span>wasm_mem_size: <span class="prelude-ty">Option</span>&lt;u32&gt;,
+    <span class="doccomment">/// Current program prefix in storage
+    </span><span class="kw">pub </span>program_storage_prefix: <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;,
+    <span class="doccomment">/// Wasm addresses of lazy-pages, that have been read or write accessed at least once.
+    /// Lazy page here is page, which has `size = max(native_page_size, gear_page_size)`.
+    </span><span class="kw">pub </span>accessed_pages_addrs: BTreeSet&lt;WasmAddr&gt;,
+    <span class="doccomment">/// End of stack wasm address. Default is `0`, which means,
+    /// that wasm data has no stack region. It&#39;s not necessary to specify
+    /// this value, `lazy-pages` uses it to identify memory, for which we
+    /// can skip processing and this memory won&#39;t be protected. So, pages
+    /// which lies before this value will never get into `released_pages`,
+    /// which means that they will never be updated in storage.
+    </span><span class="kw">pub </span>stack_end_wasm_addr: WasmAddr,
+    <span class="doccomment">/// Gear pages, which has been write accessed.
+    </span><span class="kw">pub </span>released_pages: BTreeSet&lt;PageNumber&gt;,
+}
+
+<span class="macro">thread_local! </span>{
+    <span class="comment">// NOTE: here we suppose, that each contract is executed in separate thread.
+    // Or may be in one thread but consequentially.
+
+    </span><span class="doccomment">/// Lazy-pages impl version. Different runtimes may require different impl of lazy-pages functionality.
+    /// NOTE: be dangerous when use it and pay attention process and thread initialization.
+    </span><span class="kw">static </span>LAZY_PAGES_VERSION: RefCell&lt;LazyPagesVersion&gt; = RefCell::new(LazyPagesVersion::Version1);
+    <span class="doccomment">/// Lazy-pages context for current execution.
+    </span><span class="kw">static </span>LAZY_PAGES_CONTEXT: RefCell&lt;LazyPagesExecutionContext&gt; = RefCell::new(Default::default());
+}
+
+<span class="attr">#[derive(Debug, derive_more::Display)]
+</span><span class="kw">pub enum </span>InitializeForProgramError {
+    <span class="attr">#[display(
+        fmt = <span class="string">&quot;WASM memory native address {:#x} is not aligned to the native page size&quot;</span>,
+        _0
+    )]
+    </span>WasmMemAddrIsNotAligned(usize),
+    <span class="attr">#[display(fmt = <span class="string">&quot;WASM memory size {_0:?} is bigger than u32::MAX bytes&quot;</span>)]
+    </span>WasmMemSizeBiggerThenU32Max(WasmPageNumber),
+    <span class="attr">#[display(fmt = <span class="string">&quot;WASM stack end addr {_0:?} &gt; wasm mem size {_1:?}&quot;</span>)]
+    </span>StackEndAddrBiggerThenSize(WasmPageNumber, WasmPageNumber),
+}
+
+<span class="kw">pub fn </span>initialize_for_program(
+    wasm_mem_addr: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+    wasm_mem_size: WasmPageNumber,
+    stack_end_page: <span class="prelude-ty">Option</span>&lt;WasmPageNumber&gt;,
+    program_prefix: Vec&lt;u8&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), InitializeForProgramError&gt; {
+    <span class="kw">use </span>InitializeForProgramError::<span class="kw-2">*</span>;
+    LAZY_PAGES_CONTEXT.with(|ctx| {
+        <span class="kw">let </span><span class="kw-2">mut </span>ctx = ctx.borrow_mut();
+        ctx.accessed_pages_addrs.clear();
+        ctx.released_pages.clear();
+
+        ctx.wasm_mem_addr = <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = wasm_mem_addr {
+            <span class="kw">if </span>addr % region::page::size() != <span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(WasmMemAddrIsNotAligned(addr));
+            }
+            <span class="prelude-val">Some</span>(addr)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
+
+        <span class="kw">let </span>size_in_bytes = u32::try_from(wasm_mem_size.offset())
+            .map_err(|<span class="kw">_</span>| WasmMemSizeBiggerThenU32Max(wasm_mem_size))<span class="question-mark">?</span>;
+        ctx.wasm_mem_size = <span class="prelude-val">Some</span>(size_in_bytes);
+
+        ctx.stack_end_wasm_addr = <span class="kw">if let </span><span class="prelude-val">Some</span>(page) = stack_end_page {
+            <span class="kw">if </span>page &gt; wasm_mem_size {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(StackEndAddrBiggerThenSize(page, wasm_mem_size));
+            }
+            <span class="comment">// `as u32` is safe, because page is less then mem size
+            </span>page.offset() <span class="kw">as </span>u32
+        } <span class="kw">else </span>{
+            <span class="number">0
+        </span>};
+
+        ctx.program_storage_prefix = <span class="prelude-val">Some</span>(program_prefix);
+
+        <span class="macro">log::trace!</span>(<span class="string">&quot;Initialize lazy-pages for current program: {:?}&quot;</span>, ctx);
+
+        <span class="prelude-val">Ok</span>(())
+    })
+}
+
+<span class="doccomment">/// Set end of stack addr in wasm memory.
+</span><span class="kw">pub fn </span>set_stack_end_wasm_addr(stack_end_wasm_addr: WasmAddr) {
+    LAZY_PAGES_CONTEXT.with(|ctx| ctx.borrow_mut().stack_end_wasm_addr = stack_end_wasm_addr);
+}
+
+<span class="doccomment">/// Returns end of stack address in wasm memory.
+</span><span class="kw">pub fn </span>get_stack_end_wasm_addr() -&gt; WasmAddr {
+    LAZY_PAGES_CONTEXT.with(|ctx| ctx.borrow().stack_end_wasm_addr)
+}
+
+<span class="doccomment">/// Returns current wasm mem buffer pointer, if it&#39;s set.
+</span><span class="kw">pub fn </span>get_wasm_mem_addr() -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+    LAZY_PAGES_CONTEXT.with(|ctx| ctx.borrow().wasm_mem_addr)
+}
+
+<span class="doccomment">/// Returns current wasm mem buffer size, if it&#39;s set
+</span><span class="kw">pub fn </span>get_wasm_mem_size() -&gt; <span class="prelude-ty">Option</span>&lt;u32&gt; {
+    LAZY_PAGES_CONTEXT.with(|ctx| ctx.borrow().wasm_mem_size)
+}
+
+<span class="attr">#[derive(derive_more::Display)]
+#[display(fmt = <span class="string">&quot;Wasm mem addr {_0:#x} is not aligned by native page&quot;</span>)]
+</span><span class="kw">pub struct </span>WasmMemAddrError(usize);
+
+<span class="doccomment">/// Set current wasm memory begin addr in global context
+</span><span class="kw">pub fn </span>set_wasm_mem_begin_addr(wasm_mem_addr: usize) -&gt; <span class="prelude-ty">Result</span>&lt;(), WasmMemAddrError&gt; {
+    <span class="kw">if </span>wasm_mem_addr % region::page::size() != <span class="number">0 </span>{
+        <span class="kw">return </span><span class="prelude-val">Err</span>(WasmMemAddrError(wasm_mem_addr));
+    }
+
+    LAZY_PAGES_CONTEXT.with(|ctx| {
+        <span class="kw">let _ </span>= ctx.borrow_mut().wasm_mem_addr.insert(wasm_mem_addr);
+    });
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="attr">#[derive(derive_more::Display)]
+#[display(fmt = <span class="string">&quot;Wasm mem size {_0:?} is bigger then u32::MAX bytes&quot;</span>)]
+</span><span class="kw">pub struct </span>WasmMemSizeError(WasmPageNumber);
+
+<span class="doccomment">/// Set current wasm memory size in global context
+</span><span class="kw">pub fn </span>set_wasm_mem_size(size: WasmPageNumber) -&gt; <span class="prelude-ty">Result</span>&lt;(), WasmMemSizeError&gt; {
+    <span class="kw">let </span>size_in_bytes = u32::try_from(size.offset()).map_err(|<span class="kw">_</span>| WasmMemSizeError(size))<span class="question-mark">?</span>;
+    LAZY_PAGES_CONTEXT.with(|ctx| {
+        <span class="kw">let _ </span>= ctx.borrow_mut().wasm_mem_size.insert(size_in_bytes);
+    });
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="doccomment">/// Returns vec of lazy-pages which has been accessed
+</span><span class="kw">pub fn </span>get_released_pages() -&gt; Vec&lt;PageNumber&gt; {
+    LAZY_PAGES_CONTEXT.with(|ctx| ctx.borrow().released_pages.iter().copied().collect())
+}
+
+<span class="attr">#[derive(Debug, Clone, derive_more::Display)]
+</span><span class="kw">pub enum </span>InitError {
+    <span class="attr">#[display(fmt = <span class="string">&quot;Native page size {_0:#x} is not suitable for lazy-pages&quot;</span>)]
+    </span>NativePageSizeIsNotSuitable(usize),
+    <span class="attr">#[display(fmt = <span class="string">&quot;Can not set signal handler: {_0}&quot;</span>)]
+    </span>CanNotSetUpSignalHandler(String),
+}
+
+<span class="doccomment">/// Initialize lazy-pages once for process:
+/// 1) checks whether lazy-pages is supported in current environment
+/// 2) set signals handler
+///
+/// # Safety
+/// See [`sys::setup_signal_handler`]
+</span><span class="kw">unsafe fn </span>init_for_process&lt;H: UserSignalHandler&gt;() -&gt; <span class="prelude-ty">Result</span>&lt;(), InitError&gt; {
+    <span class="kw">use </span>InitError::<span class="kw-2">*</span>;
+
+    <span class="attr">#[cfg(target_vendor = <span class="string">&quot;apple&quot;</span>)]
+    </span>{
+        <span class="comment">// Support debugging under lldb on Darwin.
+        // When SIGBUS appears lldb will stuck on it forever, without this code.
+        // See also: https://github.com/mono/mono/commit/8e75f5a28e6537e56ad70bf870b86e22539c2fb7.
+
+        </span><span class="kw">use </span>mach::{
+            exception_types::<span class="kw-2">*</span>, kern_return::<span class="kw-2">*</span>, mach_types::<span class="kw-2">*</span>, port::<span class="kw-2">*</span>, thread_status::<span class="kw-2">*</span>, traps::<span class="kw-2">*</span>,
+        };
+
+        <span class="kw">extern </span><span class="string">&quot;C&quot; </span>{
+            <span class="comment">// See https://web.mit.edu/darwin/src/modules/xnu/osfmk/man/task_set_exception_ports.html
+            </span><span class="kw">fn </span>task_set_exception_ports(
+                task: task_t,
+                exception_mask: exception_mask_t,
+                new_port: mach_port_t,
+                behavior: exception_behavior_t,
+                new_flavor: thread_state_flavor_t,
+            ) -&gt; kern_return_t;
+        }
+
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        </span><span class="kw">static </span>MACHINE_THREAD_STATE: i32 = x86_THREAD_STATE64 <span class="kw">as </span>i32;
+
+        <span class="comment">// Took const value from https://opensource.apple.com/source/cctools/cctools-870/include/mach/arm/thread_status.h
+        // ```
+        // #define ARM_THREAD_STATE64		6
+        // ```
+        </span><span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+        </span><span class="kw">static </span>MACHINE_THREAD_STATE: i32 = <span class="number">6</span>;
+
+        task_set_exception_ports(
+            mach_task_self(),
+            EXC_MASK_BAD_ACCESS,
+            MACH_PORT_NULL,
+            EXCEPTION_STATE_IDENTITY <span class="kw">as </span>exception_behavior_t,
+            MACHINE_THREAD_STATE,
+        );
+    }
+
+    LAZY_PAGES_INITIALIZED
+        .get_or_init(|| {
+            <span class="kw">let </span>ps = region::page::size();
+            <span class="kw">if </span>ps &gt; PAGE_STORAGE_GRANULARITY
+                || PAGE_STORAGE_GRANULARITY % ps != <span class="number">0
+                </span>|| (ps &gt; PageNumber::size() &amp;&amp; ps % PageNumber::size() != <span class="number">0</span>)
+                || (ps &lt; PageNumber::size() &amp;&amp; PageNumber::size() % ps != <span class="number">0</span>)
+            {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(NativePageSizeIsNotSuitable(ps));
+            }
+
+            <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = sys::setup_signal_handler::&lt;H&gt;() {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(CanNotSetUpSignalHandler(err.to_string()));
+            }
+
+            <span class="macro">log::trace!</span>(<span class="string">&quot;Successfully initialize lazy-pages for process&quot;</span>);
+
+            <span class="prelude-val">Ok</span>(())
+        })
+        .clone()
+}
+
+<span class="doccomment">/// Initialize lazy-pages for current thread.
+</span><span class="kw">pub fn </span>init&lt;H: UserSignalHandler&gt;(version: LazyPagesVersion) -&gt; bool {
+    <span class="comment">// Set version even if it has been already set, because it can be changed after runtime upgrade.
+    </span>LAZY_PAGES_VERSION.with(|v| <span class="kw-2">*</span>v.borrow_mut() = version);
+
+    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = <span class="kw">unsafe </span>{ init_for_process::&lt;H&gt;() } {
+        <span class="macro">log::debug!</span>(<span class="string">&quot;Cannot initialize lazy-pages for process: {}&quot;</span>, err);
+        <span class="kw">return </span><span class="bool-val">false</span>;
+    }
+
+    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = <span class="kw">unsafe </span>{ sys::init_for_thread() } {
+        <span class="macro">log::debug!</span>(<span class="string">&quot;Cannot initialize lazy-pages for thread: {}&quot;</span>, err);
+        <span class="kw">return </span><span class="bool-val">false</span>;
+    }
+
+    <span class="bool-val">true
+</span>}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use crate</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>region::Protection;
+    <span class="kw">use </span>std::ptr;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>read_write_flag_works() {
+        <span class="kw">unsafe fn </span>protect(access: bool) {
+            <span class="kw">let </span>protection = <span class="kw">if </span>access {
+                Protection::READ_WRITE
+            } <span class="kw">else </span>{
+                Protection::NONE
+            };
+            <span class="kw">let </span>page_size = region::page::size();
+            <span class="kw">let </span>addr = MEM_ADDR;
+            region::protect(addr, page_size, protection).unwrap();
+        }
+
+        <span class="kw">unsafe fn </span>invalid_write() {
+            ptr::write_volatile(MEM_ADDR <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>, <span class="number">123</span>);
+            protect(<span class="bool-val">false</span>);
+        }
+
+        <span class="kw">unsafe fn </span>invalid_read() {
+            <span class="kw">let _</span>: u8 = ptr::read_volatile(MEM_ADDR);
+            protect(<span class="bool-val">false</span>);
+        }
+
+        <span class="kw">static </span><span class="kw-2">mut </span>COUNTER: u32 = <span class="number">0</span>;
+        <span class="kw">static </span><span class="kw-2">mut </span>MEM_ADDR: <span class="kw-2">*const </span>u8 = ptr::null_mut();
+
+        <span class="kw">struct </span>TestHandler;
+
+        <span class="kw">impl </span>UserSignalHandler <span class="kw">for </span>TestHandler {
+            <span class="kw">unsafe fn </span>handle(info: ExceptionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+                <span class="kw">let </span>write_expected = COUNTER % <span class="number">2 </span>== <span class="number">0</span>;
+                <span class="macro">assert_eq!</span>(info.is_write, <span class="prelude-val">Some</span>(write_expected));
+
+                protect(<span class="bool-val">true</span>);
+
+                COUNTER += <span class="number">1</span>;
+
+                <span class="prelude-val">Ok</span>(())
+            }
+        }
+
+        <span class="macro">assert!</span>(init::&lt;TestHandler&gt;(LazyPagesVersion::Version1));
+
+        <span class="kw">let </span>page_size = region::page::size();
+        <span class="kw">let </span>addr = region::alloc(page_size, Protection::NONE).unwrap();
+
+        <span class="kw">unsafe </span>{
+            MEM_ADDR = addr.as_ptr();
+
+            invalid_write();
+            invalid_read();
+            invalid_write();
+            invalid_read();
+        }
+    }
+}
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="gear_lazy_pages" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (7eef946fc 2022-11-06)" data-search-js="search-39ee4160c7dc16c9.js" data-settings-js="settings-3a0b9947ba1bd99a.js" data-settings-css="settings-a66f7524084a489a.css" ></div></body></html>

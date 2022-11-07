@@ -1,0 +1,522 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `lazy-pages/src/sys/unix.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unix.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-b826345d929eb323.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-87108236bf50c158.css"><link rel="stylesheet" disabled href="../../../static.files/dark-839c5fb8722cb456.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-d48ac194417684c8.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-74087aa2e88f4475.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0dede64717b247ca.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-201a7e04dc4c6fce.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../gear_lazy_pages/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+</pre><pre class="rust"><code><span class="comment">/*
+ * This file is part of Gear.
+ *
+ * Copyright (C) 2022 Gear Technologies Inc.
+ * SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
+ */
+
+</span><span class="kw">use crate</span>::{
+    sys::{ExceptionInfo, UserSignalHandler},
+    Error,
+};
+<span class="kw">use </span>cfg_if::cfg_if;
+<span class="kw">use </span>nix::{
+    libc::{c_void, siginfo_t},
+    sys::{signal, signal::SigHandler},
+};
+<span class="kw">use </span>once_cell::sync::OnceCell;
+<span class="kw">use </span>std::io;
+
+<span class="doccomment">/// Signal handler which has been set before lazy-pages initialization.
+/// Currently use to support wasmer signal handler.
+/// Wasmer protects memory around wasm memory and for stack limits.
+/// It makes it only in `store` initialization when executor is created,
+/// see https://github.com/gear-tech/substrate/blob/gear-stable/client/executor/common/src/sandbox/wasmer_backend.rs
+/// and https://github.com/wasmerio/wasmer/blob/e6857d116134bdc9ab6a1dabc3544cf8e6aee22b/lib/vm/src/trap/traphandlers.rs#L548
+/// So, if we receive signal from unknown memory we should try to use old (wasmer) signal handler.
+</span><span class="kw">static </span><span class="kw-2">mut </span>OLD_SIG_HANDLER: OnceCell&lt;SigHandler&gt; = OnceCell::new();
+
+<span class="macro">cfg_if! </span>{
+    <span class="kw">if </span><span class="attr">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))] </span>{
+        <span class="kw">unsafe fn </span>ucontext_get_write(ucontext: <span class="kw-2">*mut </span>nix::libc::ucontext_t) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+            <span class="kw">let </span>error_reg = nix::libc::REG_ERR <span class="kw">as </span>usize;
+            <span class="kw">let </span>error_code = (<span class="kw-2">*</span>ucontext).uc_mcontext.gregs[error_reg];
+            <span class="comment">// Use second bit from err reg. See https://git.io/JEQn3
+            </span><span class="prelude-val">Some</span>(error_code &amp; <span class="number">0b10 </span>== <span class="number">0b10</span>)
+        }
+    } <span class="kw">else if </span><span class="attr">#[cfg(all(target_os = <span class="string">&quot;macos&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))] </span>{
+        <span class="kw">unsafe fn </span>ucontext_get_write(ucontext: <span class="kw-2">*mut </span>nix::libc::ucontext_t) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+            <span class="comment">// See https://wiki.osdev.org/Exceptions
+            </span><span class="kw">const </span>WRITE_BIT_MASK: u32 = <span class="number">0b10</span>;
+            <span class="kw">const </span>TRAPNO: u16 = <span class="number">0xe</span>; <span class="comment">// Page Fault
+
+            </span><span class="kw">let </span>mcontext = (<span class="kw-2">*</span>ucontext).uc_mcontext;
+            <span class="kw">let </span>exception_state = (<span class="kw-2">*</span>mcontext).__es;
+            <span class="kw">let </span>trapno = exception_state.__trapno;
+            <span class="kw">let </span>err = exception_state.__err;
+
+            <span class="macro">assert_eq!</span>(trapno, TRAPNO);
+
+            <span class="prelude-val">Some</span>(err &amp; WRITE_BIT_MASK == WRITE_BIT_MASK)
+        }
+    } <span class="kw">else if </span><span class="attr">#[cfg(all(target_os = <span class="string">&quot;macos&quot;</span>, target_arch = <span class="string">&quot;aarch64&quot;</span>))] </span>{
+        <span class="kw">unsafe fn </span>ucontext_get_write(ucontext: <span class="kw-2">*mut </span>nix::libc::ucontext_t) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+            <span class="comment">// See https://developer.arm.com/documentation/ddi0595/2021-03/AArch64-Registers/ESR-EL1--Exception-Syndrome-Register--EL1-
+            </span><span class="kw">const </span>WNR_BIT_MASK: u32 = <span class="number">0b100_0000</span>; <span class="comment">// Write not Read bit
+            </span><span class="kw">const </span>EXCEPTION_CLASS_SHIFT: u32 = u32::BITS - <span class="number">6</span>;
+            <span class="kw">const </span>EXCEPTION_CLASS: u32 = <span class="number">0b10_0100</span>; <span class="comment">// Data Abort from a lower Exception Level
+
+            </span><span class="kw">let </span>mcontext = (<span class="kw-2">*</span>ucontext).uc_mcontext;
+            <span class="kw">let </span>exception_state = (<span class="kw-2">*</span>mcontext).__es;
+            <span class="kw">let </span>esr = exception_state.__esr;
+
+            <span class="kw">let </span>exception_class = esr &gt;&gt; EXCEPTION_CLASS_SHIFT;
+            <span class="macro">assert_eq!</span>(exception_class, EXCEPTION_CLASS);
+
+            <span class="prelude-val">Some</span>(esr &amp; WNR_BIT_MASK == WNR_BIT_MASK)
+        }
+    } <span class="kw">else </span>{
+        <span class="macro">compile_error!</span>(<span class="string">&quot;lazy-pages are not supported on your system. Disable `lazy-pages` feature&quot;</span>);
+    }
+}
+
+<span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>handle_sigsegv&lt;H&gt;(sig: i32, info: <span class="kw-2">*mut </span>siginfo_t, ucontext: <span class="kw-2">*mut </span>c_void)
+<span class="kw">where
+    </span>H: UserSignalHandler,
+{
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span>addr = (<span class="kw-2">*</span>info).si_addr();
+        <span class="kw">let </span>is_write = ucontext_get_write(ucontext <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>);
+        <span class="kw">let </span>exc_info = ExceptionInfo {
+            fault_addr: addr <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+            is_write,
+        };
+
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = H::handle(exc_info) {
+            <span class="kw">let </span>old_sig_handler_works = <span class="kw">match </span>err {
+                Error::SignalFromUnknownMemory { .. } | Error::WasmMemAddrIsNotSet =&gt; {
+                    old_sig_handler(sig, info, ucontext)
+                }
+                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+            };
+            <span class="kw">if </span>!old_sig_handler_works {
+                <span class="macro">panic!</span>(<span class="string">&quot;Signal handler failed: {}&quot;</span>, err);
+            }
+        }
+    }
+}
+
+<span class="kw">use </span>errno::Errno;
+
+<span class="attr">#[derive(Debug, Clone, Copy, derive_more::Display)]
+</span><span class="kw">enum </span>ThreadInitError {
+    <span class="attr">#[display(fmt = <span class="string">&quot;Cannot get information about old signal stack: {_0}&quot;</span>)]
+    </span>OldStack(Errno),
+    <span class="attr">#[display(fmt = <span class="string">&quot;Cannot mmap space for signal stack: {_0}&quot;</span>)]
+    </span>Mmap(Errno),
+    <span class="attr">#[display(fmt = <span class="string">&quot;Cannot set new signal stack: {_0}&quot;</span>)]
+    </span>SigAltStack(Errno),
+}
+
+<span class="kw">fn </span>init_for_thread_internal() -&gt; <span class="prelude-ty">Result</span>&lt;(), ThreadInitError&gt; {
+    <span class="kw">use </span>core::{mem, ptr};
+
+    <span class="comment">// Should be enough for lazy-pages signal handler.
+    // Equal to libc::SIGSTKSZ on macos M1.
+    </span><span class="kw">const </span>SIGNAL_STACK_SIZE: usize = <span class="number">0x20000</span>;
+
+    <span class="kw">enum </span>StackInfo {
+        UseOldStack,
+        NewStack(<span class="kw-2">*mut </span>libc::c_void),
+    }
+
+    <span class="kw">impl </span>Drop <span class="kw">for </span>StackInfo {
+        <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="kw">if let </span>StackInfo::NewStack(mmap_ptr) = <span class="self">self </span>{
+                <span class="kw">unsafe </span>{
+                    <span class="comment">// Deallocate the stack memory.
+                    </span><span class="kw">if </span>libc::munmap(<span class="kw-2">*</span>mmap_ptr, SIGNAL_STACK_SIZE) != <span class="number">0 </span>{
+                        <span class="macro">log::error!</span>(
+                            <span class="string">&quot;Cannot deallocate signal stack memory during the thread shutdown: {}&quot;</span>,
+                            errno::errno()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    <span class="kw">unsafe fn </span>init_sigstack() -&gt; <span class="prelude-ty">Result</span>&lt;StackInfo, ThreadInitError&gt; {
+        <span class="comment">// Check whether old signal stack exist and suitable for lazy-pages signal handler.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>old_stack = mem::zeroed();
+        <span class="kw">let </span>res = libc::sigaltstack(ptr::null(), <span class="kw-2">&amp;mut </span>old_stack);
+        <span class="kw">if </span>res != <span class="number">0 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ThreadInitError::OldStack(errno::errno()));
+        }
+        <span class="kw">if </span>old_stack.ss_flags &amp; libc::SS_DISABLE == <span class="number">0 </span>&amp;&amp; old_stack.ss_size &gt;= SIGNAL_STACK_SIZE {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(StackInfo::UseOldStack);
+        }
+
+        <span class="comment">// Alloc memory for new signal stack.
+        </span><span class="kw">let </span>ptr = libc::mmap(
+            ptr::null_mut(),
+            SIGNAL_STACK_SIZE,
+            libc::PROT_READ | libc::PROT_WRITE,
+            libc::MAP_PRIVATE | libc::MAP_ANON,
+            -<span class="number">1</span>,
+            <span class="number">0</span>,
+        );
+        <span class="kw">if </span>ptr == libc::MAP_FAILED {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ThreadInitError::Mmap(errno::errno()));
+        }
+
+        <span class="comment">// Mark allocated memory as new signal stack.
+        </span><span class="kw">let </span>new_stack = libc::stack_t {
+            ss_sp: ptr,
+            ss_flags: <span class="number">0</span>,
+            ss_size: SIGNAL_STACK_SIZE,
+        };
+        <span class="kw">let </span>res = libc::sigaltstack(<span class="kw-2">&amp;</span>new_stack, ptr::null_mut());
+        <span class="kw">if </span>res != <span class="number">0 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ThreadInitError::SigAltStack(errno::errno()));
+        }
+
+        <span class="macro">log::debug!</span>(
+            <span class="string">&quot;Set new signal stack: ptr = {:?}, size = {:#x}&quot;</span>,
+            ptr,
+            SIGNAL_STACK_SIZE
+        );
+
+        <span class="prelude-val">Ok</span>(StackInfo::NewStack(ptr))
+    }
+
+    <span class="macro">thread_local! </span>{
+        <span class="kw">static </span>TLS: <span class="prelude-ty">Result</span>&lt;StackInfo, ThreadInitError&gt; = <span class="kw">unsafe </span>{ init_sigstack() };
+    }
+
+    TLS.with(|tls| tls.as_ref().map(|<span class="kw">_</span>| ()).map_err(|err| <span class="kw-2">*</span>err))
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>init_for_thread() -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    init_for_thread_internal().map_err(|err| err.to_string())
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>setup_signal_handler&lt;H&gt;() -&gt; io::Result&lt;()&gt;
+<span class="kw">where
+    </span>H: UserSignalHandler,
+{
+    <span class="kw">let </span>handler = signal::SigHandler::SigAction(handle_sigsegv::&lt;H&gt;);
+    <span class="comment">// Set additional SA_ONSTACK and SA_NODEFER to avoid problems with wasmer executor.
+    // See comment from shorturl.at/KMO68 :
+    // ```
+    //  SA_ONSTACK allows us to handle signals on an alternate stack,
+    //  so that the handler can run in response to running out of
+    //  stack space on the main stack. Rust installs an alternate
+    //  stack with sigaltstack, so we rely on that.
+    //  SA_NODEFER allows us to reenter the signal handler if we
+    //  crash while handling the signal, and fall through to the
+    //  Breakpad handler by testing handlingSegFault.
+    // ```
+    </span><span class="kw">let </span>sig_action = signal::SigAction::new(
+        handler,
+        signal::SaFlags::SA_SIGINFO | signal::SaFlags::SA_ONSTACK | signal::SaFlags::SA_NODEFER,
+        signal::SigSet::empty(),
+    );
+
+    <span class="kw">let </span>signal = <span class="kw">if </span><span class="macro">cfg!</span>(target_os = <span class="string">&quot;macos&quot;</span>) {
+        signal::SIGBUS
+    } <span class="kw">else </span>{
+        signal::SIGSEGV
+    };
+
+    <span class="kw">let </span>old_sigaction = signal::sigaction(signal, <span class="kw-2">&amp;</span>sig_action).map_err(io::Error::from)<span class="question-mark">?</span>;
+    <span class="kw">let </span>handler = old_sigaction.handler();
+    <span class="kw">let _ </span>= OLD_SIG_HANDLER
+        .set(handler)
+        .map(|<span class="kw">_</span>| <span class="macro">log::trace!</span>(<span class="string">&quot;Save old signal handler: {:?}&quot;</span>, handler));
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">unsafe fn </span>old_sig_handler(sig: i32, info: <span class="kw-2">*mut </span>siginfo_t, ucontext: <span class="kw-2">*mut </span>c_void) -&gt; bool {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(old_sig_handler) = OLD_SIG_HANDLER.get() {
+        <span class="kw">match </span>old_sig_handler {
+            SigHandler::SigDfl | SigHandler::SigIgn =&gt; <span class="bool-val">false</span>,
+            SigHandler::Handler(func) =&gt; {
+                func(sig);
+                <span class="bool-val">true
+            </span>}
+            SigHandler::SigAction(func) =&gt; {
+                func(sig, info, ucontext);
+                <span class="bool-val">true
+            </span>}
+        }
+    } <span class="kw">else </span>{
+        <span class="bool-val">false
+    </span>}
+}
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gear_lazy_pages" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (7eef946fc 2022-11-06)" data-search-js="search-39ee4160c7dc16c9.js" data-settings-js="settings-3a0b9947ba1bd99a.js" data-settings-css="settings-a66f7524084a489a.css" ></div></body></html>

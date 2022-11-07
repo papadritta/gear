@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"gear_backend_sandbox":[["impl <a class=\"trait\" href=\"gear_core/memory/trait.Memory.html\" title=\"trait gear_core::memory::Memory\">Memory</a> for <a class=\"struct\" href=\"gear_backend_sandbox/memory/struct.MemoryWrap.html\" title=\"struct gear_backend_sandbox::memory::MemoryWrap\">MemoryWrap</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

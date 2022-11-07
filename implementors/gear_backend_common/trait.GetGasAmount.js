@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"gear_backend_sandbox":[["impl <a class=\"trait\" href=\"gear_backend_common/trait.GetGasAmount.html\" title=\"trait gear_backend_common::GetGasAmount\">GetGasAmount</a> for <a class=\"struct\" href=\"gear_backend_sandbox/env/struct.Error.html\" title=\"struct gear_backend_sandbox::env::Error\">Error</a>"]],
+"gear_core_processor":[["impl GetGasAmount for <a class=\"struct\" href=\"gear_core_processor/struct.Ext.html\" title=\"struct gear_core_processor::Ext\">Ext</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

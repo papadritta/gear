@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["GasReservationState","Gas reservation state."]],"struct":[["GasReservationSlot","Gas reservation slot."],["GasReserver","Gas reserver."]],"type":[["GasReservationMap","Gas reservation map."],["GasReservationStates","Gas reservation states."]]};

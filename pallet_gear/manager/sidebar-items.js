@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["HandleKind",""]],"struct":[["CodeInfo",""],["ExtManager","Journal handler implementation for `pallet_gear`."],["QueuePostProcessingData","Data need for depositing event about queue processing result."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["PageAction","Page access rights."]],"trait":[["Ext","External api for managing memory, messages, allocations and gas-counting."]]};

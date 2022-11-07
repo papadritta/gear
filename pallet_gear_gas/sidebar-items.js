@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["pallet","The module that hosts all the FRAME types needed to add this pallet to a runtime."]],"struct":[["H256","Fixed-size uninterpreted hash type with 32 bytes (256 bits) size."]]};
